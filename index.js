@@ -16,7 +16,10 @@ const app = express();
 connectDB();
 
 // Middleware
-app.use(cors());
+app.use(cors({
+    origin: ['https://leah-website-client-q5r8.vercel.app', 'http://localhost:3000'],
+    credentials: true
+}));
 app.use(express.json({ limit: '50mb' })); // הגדלת הגבול עבור תמונות
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
