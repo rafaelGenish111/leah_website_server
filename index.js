@@ -8,6 +8,7 @@ const declarationRoutes = require('./routes/declarations');
 const userRoutes = require('./routes/users');
 const authRoutes = require('./routes/auth');
 const articleRoutes = require('./routes/articles');
+const galleryImageRoutes = require('./routes/galleryImages');
 
 dotenv.config();
 const app = express();
@@ -31,6 +32,7 @@ app.use('/api/declarations', declarationRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/articles', articleRoutes); // הוספת נתיבי המאמרים
+app.use('/api/gallery', galleryImageRoutes);
 // בקובץ routes בשרת
 app.get('/api/ping', (req, res) => {
     res.json({ status: 'ok' });
