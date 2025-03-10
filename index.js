@@ -18,7 +18,12 @@ connectDB();
 
 // Middleware
 app.use(cors({
-    origin: ['https://leah-website-client-q5r8.vercel.app', 'http://localhost:3000'],
+    origin: [
+        'https://leah-website-client-q5r8.vercel.app', 
+        'http://localhost:3000',
+        'https://www.leahgenish.com',
+        'https://leahgenish.com'
+    ],
     credentials: true
 }));
 app.use(express.json({ limit: '50mb' })); // הגדלת הגבול עבור תמונות
