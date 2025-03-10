@@ -31,7 +31,10 @@ app.use('/api/declarations', declarationRoutes);
 app.use('/api/users', userRoutes);
 app.use('/api/auth', authRoutes);
 app.use('/api/articles', articleRoutes); // הוספת נתיבי המאמרים
-
+// בקובץ routes בשרת
+app.get('/api/ping', (req, res) => {
+    res.json({ status: 'ok' });
+  });
 // עדכון ב-PORT
 const PORT = process.env.PORT || 5000;
 app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
