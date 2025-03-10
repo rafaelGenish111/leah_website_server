@@ -158,35 +158,80 @@ router.put('/:id', [auth, upload.single('image')], async (req, res) => {
   }
 });
 
-// מחיקת תמונה
-router.delete('/:id', auth, async (req, res) => {
-  try {
-    const galleryImage = await GalleryImage.findById(req.params.id);
-    
-    if (!galleryImage) {
-      return res.status(404).json({ msg: 'תמונה לא נמצאה' });
-    }
-    
-    // מחיקת קובץ התמונה
-    const imagePath = galleryImage.image.replace(`${req.protocol}://${req.get('host')}/`, '');
+// פונקציית עזר לטיפול בנתיבי קבצים
+function extractFilePath(fileUrl, baseUrl) {
     try {
-      fs.unlinkSync(imagePath);
+      // הסרת פרוטוקול ודומיין מה-URL המלא
+      let filePath = fileUrl;
+      
+      // בדיקה אם זה URL מלא
+      if (fileUrl.startsWith('http')) {
+        // ניסיון ראשון - החלפת המחרוזת הידועה
+        if (baseUrl && fileUrl.includes(baseUrl)) {
+          filePath = fileUrl.replace(baseUrl, '');
+        } else {
+          // ניסיון שני - הסרת פרוטוקול, דומיין ונמל
+          const urlObj = new URL(fileUrl);
+          filePath = urlObj.pathname;
+        }
+      }
+      
+      // הסרת לוכסן מוביל אם קיים
+      if (filePath.startsWith('/')) {
+        filePath = filePath.substring(1);
+      }
+      
+      // תיקון קידוד URL
+      filePath = decodeURIComponent(filePath);
+      
+      return filePath;
     } catch (err) {
-      console.error('Error deleting image file:', err);
+      console.error('Error extracting file path:', err);
+      // החזרת המחרוזת המקורית אם יש שגיאה בעיבוד
+      return fileUrl;
     }
-    
-    await galleryImage.remove();
-    res.json({ msg: 'התמונה נמחקה' });
-  } catch (err) {
-    console.error(err.message);
-    
-    if (err.kind === 'ObjectId') {
-      return res.status(404).json({ msg: 'תמונה לא נמצאה' });
-    }
-    
-    res.status(500).send('שגיאת שרת');
   }
-});
+  
+  // שימוש בפונקציה בנתיב המחיקה:
+  router.delete('/:id', auth, async (req, res) => {
+    try {
+      const galleryImage = await GalleryImage.findById(req.params.id);
+      
+      if (!galleryImage) {
+        return res.status(404).json({ msg: 'תמונה לא נמצאה' });
+      }
+      
+      // הוצאת נתיב הקובץ מה-URL באופן חסין יותר
+      const baseUrl = `${req.protocol}://${req.get('host')}/`;
+      const imagePath = extractFilePath(galleryImage.image, baseUrl);
+      
+      // מחיקת קובץ התמונה
+      try {
+        // בדיקה אם הקובץ קיים לפני ניסיון מחיקה
+        if (fs.existsSync(imagePath)) {
+          fs.unlinkSync(imagePath);
+          console.log(`Successfully deleted: ${imagePath}`);
+        } else {
+          console.log(`File does not exist: ${imagePath}`);
+        }
+      } catch (err) {
+        console.error(`Error deleting image file: ${imagePath}`, err);
+      }
+      
+      // שימוש ב-deleteOne במקום remove
+      await GalleryImage.deleteOne({ _id: galleryImage._id });
+      
+      res.json({ msg: 'התמונה נמחקה' });
+    } catch (err) {
+      console.error('Error deleting gallery image:', err);
+      
+      if (err.kind === 'ObjectId') {
+        return res.status(404).json({ msg: 'תמונה לא נמצאה' });
+      }
+      
+      res.status(500).send('שגיאת שרת');
+    }
+  });
 
 // עדכון סדר התמונות
 router.post('/reorder', auth, async (req, res) => {
